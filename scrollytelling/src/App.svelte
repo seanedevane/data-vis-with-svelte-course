@@ -1,83 +1,83 @@
 <script>
-  import AxisX from "$components/AxisX.svelte";
-  import AxisY from "$components/AxisY.svelte";
-  import Tooltip from "$components/Tooltip.svelte";
-  import { fly } from "svelte/transition";
+  import Chart from "$components/Chart.svelte";
+  import Steps from "$components/Steps.svelte";
+  import TextContent_1 from "$components/TextContent-1.svelte";
+  import TextContent_2 from "./components/TextContent-2.svelte";
   import data from "$data/data.js";
   console.log(data);
   import { scaleLinear } from "d3-scale";
   import { max } from 'd3-array';
-  
+
+
+
   const margin = {
-    top: 20,
-    right: 15,
-    bottom: 20,
-    left: 0
+    top: 25,
+    right: 25,
+    bottom: 30,
+    left: 10
   };
 
-  let width = 400;
+  const radius = 10;
+
+  let width = 600;
   $: console.log({width})
   $: innerWidth = width - margin.left - margin.right
   $: xScale = scaleLinear()
-    .domain([0,100])
-    .range([0, innerWidth])
+  .domain([0,100])
+  .range([0, innerWidth])
 
   let height = 400;
-  let innerHeight = height - margin.top - margin.bottom
-  let yScale = scaleLinear()
-    .domain([0, max(data, d=> d.hours)])
-    .range([innerHeight, 0])
+  $: innerHeight = height - margin.top - margin.bottom
+  $: yScale = scaleLinear()
+  .domain([0, max(data, d=> d.hours)])
+  .range([innerHeight, 0])
 
   let hoveredData;
   $: console.log(hoveredData);
+  let currentStep;
+  console.log(currentStep);
+  let initialData = data.sort((a, b) => a.grade - b.grade);
+  let renderedData = initialData; // ensure we have useable data on first load
+
+  // midpoints of our domains to set initial positions of each circle to the center of the chart
+    $: X_MIDPOINT = (xScale.domain()[0] + xScale.domain()[1]) / 2;
+    $: Y_MIDPOINT = (yScale.domain()[0] + yScale.domain()[1]) / 2;
+
+  $: {
+    if (currentStep === 0 ) {
+      // set X and Y positions of all circles to 0
+      renderedData = initialData.map(d => ({ ...d, grade: X_MIDPOINT, hours: Y_MIDPOINT }));
+      hoveredData = null;
+    } else if (currentStep === 1) {
+      renderedData = initialData.map(d => ({ ...d, hours: Y_MIDPOINT }));
+      hoveredData = null;
+    } else if (currentStep === 2) {
+      renderedData = initialData;
+      // TODO: setting hoveredData here overrides on mouseover behavior
+      // hoveredData = renderedData.find(d => d.hours >= 40)
+    }
+  }
 </script>
-  <h1>Hours studied vs. Final grade</h1>
-  <div class='chart-container' bind:clientWidth={width}>
-    <svg {width} {height}>
-      <g class='inner-chart' transform="translate({margin.left} {margin.top})">
-        <AxisY {yScale} width={innerWidth} />
-        <AxisX {xScale} height={innerHeight} width={innerWidth}/>
-      {#each data.sort((a, b) => a.grade - b.grade) as d}
-        <circle 
-        in:fly={{ x: -20, opacity: 0, duration: 500 }}
-        cx={xScale(d.grade)}
-        cy={yScale(d.hours)}
-        r={hoveredData == d ? 20 : 10}
-        opacity={hoveredData ? (hoveredData == d ? 1 : 0.45): 1}
-        fill="purple"
-        stroke="black"
-        stroke-width={1}
-        on:mouseover={() => {hoveredData = d}}
-        on:focus={() => { hoveredData = d}}
-        on:mouseleave={() => hoveredData = null}
+<main>
+  <TextContent_1 />
+  <section>
+      <Chart
+        bind:width
+        bind:height
+        bind:hoveredData
+        {renderedData}
+        {margin}
+        {currentStep}
+        {xScale}
+        {yScale}
+        {radius}
+      />
 
-        />
-      {/each}
-      </g>
-    </svg>
-    {#if hoveredData}
-    <Tooltip 
-      data={hoveredData} 
-      {xScale}
-      {yScale}
-      width={innerWidth}
-    />
-    {/if}
-  </div>
-
+    <Steps bind:currentStep />
+  </section>
+  <TextContent_2 />
+</main>
 <style>
-  circle {
-    transition: r 300ms ease, opacity 500ms ease;
-    cursor: pointer;
-  }
-  :global(.tick text, .axis-title) {
-    font-weight: 400;
-    font-size: 0.9rem;
-    fill: hsla(212, 10%, 53%, 1);
-  }
-  .y {
-    height: 100%;
-  }
   main {
     text-align: center;
     margin: 0 auto;
@@ -85,38 +85,10 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background: #f0f0f0;
+    max-width: 769px;
+    padding: 0.5rem;
   }
-
-  h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-    color: #333;
-    margin-bottom: 2rem;
-    line-height: 1.5;
-  }
-
-  pre {
-    padding: 1px 6px;
-    display: inline;
-    margin: 0;
-    background: #ffb7a0;
-    border-radius: 3px;
-  }
-
-  a {
-    color: #ff3e00;
-    text-decoration: inherit;
-  }
-
-  footer {
-    font-size: 1rem;
-    color: #333;
+  section {
+    position: relative;
   }
 </style>
