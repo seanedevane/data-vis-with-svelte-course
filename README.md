@@ -1,9 +1,3 @@
----
-title: README
-author: Sean Edevane
-date: "2023-10-23"
----
-
 ## About this repository
 
 The contents of this repository were created in conjunction as hands-on labs for Newline's [Better Data Visualization with Svelte](https://www.newline.co/courses/better-data-visualizations-with-svelte) course by Connor Rothschild. I thoroughly enjoyed the course and if you're curious at all about Svelte, data visualization, or D3 it's well worth a look.
